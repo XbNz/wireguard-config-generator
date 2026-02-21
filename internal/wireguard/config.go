@@ -1,12 +1,11 @@
 package wireguard
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"net/netip"
 	"strings"
-
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type Configuration struct {
@@ -89,9 +88,12 @@ func (c *Configuration) ToIPCFormat() (string, error) {
 }
 
 func wgKeyToHex(key string) (string, error) {
-	k, err := wgtypes.ParseKey(key)
+	decoded, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return "", fmt.Errorf("parse key: %w", err)
 	}
-	return hex.EncodeToString(k[:]), nil
+	if len(decoded) != 32 {
+		return "", fmt.Errorf("parse key: invalid key length %d (expected 32)", len(decoded))
+	}
+	return hex.EncodeToString(decoded), nil
 }
