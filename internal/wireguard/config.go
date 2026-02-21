@@ -1,0 +1,97 @@
+package wireguard
+
+import (
+	"encoding/hex"
+	"fmt"
+	"net/netip"
+	"strings"
+
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+)
+
+type Configuration struct {
+	PrivateKey         string
+	InterfaceAddresses []netip.Prefix
+	DNS                []netip.Addr
+	Peers              []PeerConfig
+}
+
+func NewConfiguration(
+	privateKey string,
+	interfaceAddresses []netip.Prefix,
+	dns []netip.Addr,
+	peers []PeerConfig,
+) Configuration {
+	return Configuration{
+		PrivateKey:         privateKey,
+		InterfaceAddresses: interfaceAddresses,
+		DNS:                dns,
+		Peers:              peers,
+	}
+}
+
+type PeerConfig struct {
+	PublicKey           string
+	Endpoint            netip.AddrPort
+	AllowedIPs          []netip.Prefix
+	PersistentKeepalive uint16
+}
+
+func NewPeerConfig(
+	publicKey string,
+	endpoint netip.AddrPort,
+	allowedIPs []netip.Prefix,
+	persistentKeepalive uint16,
+) PeerConfig {
+	return PeerConfig{
+		PublicKey:           publicKey,
+		Endpoint:            endpoint,
+		AllowedIPs:          allowedIPs,
+		PersistentKeepalive: persistentKeepalive,
+	}
+}
+
+// ToIPCFormat serialises the configuration into the WireGuard UAPI key-value format
+func (c *Configuration) ToIPCFormat() (string, error) {
+	var sb strings.Builder
+
+	privHex, err := wgKeyToHex(c.PrivateKey)
+	if err != nil {
+		return "", fmt.Errorf("invalid private_key: %w", err)
+	}
+
+	fmt.Fprintf(&sb, "private_key=%s\nlisten_port=0\n", privHex)
+
+	for i, peer := range c.Peers {
+		pubHex, err := wgKeyToHex(peer.PublicKey)
+		if err != nil {
+			return "", fmt.Errorf("invalid public_key for peer %d: %w", i, err)
+		}
+
+		fmt.Fprintf(&sb, "public_key=%s\n", pubHex)
+
+		if peer.Endpoint.IsValid() {
+			fmt.Fprintf(&sb, "endpoint=%s\n", peer.Endpoint.String())
+		}
+
+		fmt.Fprintf(&sb, "replace_allowed_ips=true\n")
+		for _, ip := range peer.AllowedIPs {
+			fmt.Fprintf(&sb, "allowed_ip=%s\n", ip.String())
+		}
+
+		if peer.PersistentKeepalive > 0 {
+			fmt.Fprintf(&sb, "persistent_keepalive_interval=%d\n\n", peer.PersistentKeepalive)
+		}
+	}
+
+	sb.WriteString("\n")
+	return sb.String(), nil
+}
+
+func wgKeyToHex(key string) (string, error) {
+	k, err := wgtypes.ParseKey(key)
+	if err != nil {
+		return "", fmt.Errorf("parse key: %w", err)
+	}
+	return hex.EncodeToString(k[:]), nil
+}
