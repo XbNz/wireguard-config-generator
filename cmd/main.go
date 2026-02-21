@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -29,6 +31,7 @@ type Config struct {
 	DNS                 string `ff:"long=dns, default=1.1.1.1, usage=Comma separated list of DNS servers to use for the WireGuard interface"                                    validate:"required"`
 	AllowedIPs          string `ff:"long=allowed-ips, default=0.0.0.0/0, usage=Comma separated list of allowed IPs for the WireGuard peer"                             validate:"required"`
 	PersistentKeepalive string `ff:"long=persistent-keepalive, default=25, usage=Persistent keepalive interval in seconds"                                           validate:"required,numeric,min=1,max=65535"`
+	OutputDir           string `ff:"long=output-dir, usage=Directory to output WireGuard configuration files to" validate:"required"`
 }
 
 func main() {
@@ -136,7 +139,33 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("list configs: %w", err)
 	}
 
-	log.Fatal(configs)
+	for i, config := range configs {
+		ini, err := config.ToINIFormat()
+		if err != nil {
+			return fmt.Errorf("convert config to INI format: %w", err)
+		}
+
+		absolutePath, err := filepath.Abs(cfg.OutputDir)
+
+		if err != nil {
+			return fmt.Errorf("get absolute path of output directory: %w", err)
+		}
+
+		if err := os.MkdirAll(absolutePath, 0755); err != nil {
+			return fmt.Errorf("create output directory: %w", err)
+		}
+
+		fileName := filepath.Join(absolutePath, fmt.Sprintf("%s_%d.conf", cfg.Provider, i))
+
+		file, err := os.Create(fileName)
+		if err != nil {
+			return fmt.Errorf("create output file: %w", err)
+		}
+
+		if err := writeContent(file, ini); err != nil {
+			return fmt.Errorf("write content to file: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -150,4 +179,10 @@ func ensureConfigValuesForProvider(provider wireguard.Provider, cfg Config) erro
 	}
 
 	return nil
+}
+
+func writeContent(closer io.WriteCloser, content string) error {
+	defer closer.Close()
+	_, err := closer.Write([]byte(content))
+	return err
 }

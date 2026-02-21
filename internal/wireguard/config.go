@@ -87,6 +87,43 @@ func (c *Configuration) ToIPCFormat() (string, error) {
 	return sb.String(), nil
 }
 
+// ToINIFormat serialises the configuration into the WireGuard INI format
+func (c *Configuration) ToINIFormat() (string, error) {
+	var sb strings.Builder
+
+	fmt.Fprintf(&sb, "[Interface]\n")
+	fmt.Fprintf(&sb, "PrivateKey = %s\n", c.PrivateKey)
+
+	interfaceAddresses := make([]string, 0, len(c.InterfaceAddresses))
+	for _, addr := range c.InterfaceAddresses {
+		interfaceAddresses = append(interfaceAddresses, addr.String())
+	}
+
+	dnsAddresses := make([]string, 0, len(c.DNS))
+	for _, addr := range c.DNS {
+		dnsAddresses = append(dnsAddresses, addr.String())
+	}
+
+	fmt.Fprintf(&sb, "Address = %s\n", strings.Join(interfaceAddresses, ", "))
+	fmt.Fprintf(&sb, "DNS = %s\n", strings.Join(dnsAddresses, ", "))
+
+	for _, peer := range c.Peers {
+		fmt.Fprintf(&sb, "\n[Peer]\n")
+		fmt.Fprintf(&sb, "PublicKey = %s\n", peer.PublicKey)
+
+		allowedIPs := make([]string, 0, len(peer.AllowedIPs))
+		for _, addr := range peer.AllowedIPs {
+			allowedIPs = append(allowedIPs, addr.String())
+		}
+
+		fmt.Fprintf(&sb, "AllowedIPs = %s\n", strings.Join(allowedIPs, ", "))
+		fmt.Fprintf(&sb, "Endpoint = %s\n", peer.Endpoint.String())
+		fmt.Fprintf(&sb, "PersistentKeepalive = %d\n", peer.PersistentKeepalive)
+	}
+
+	return sb.String(), nil
+}
+
 func wgKeyToHex(key string) (string, error) {
 	decoded, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
