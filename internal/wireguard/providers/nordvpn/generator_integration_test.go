@@ -18,10 +18,12 @@ import (
 
 func TestMain(m *testing.M) {
 	moduleRoot, _ := path.ToModuleRoot()
+	fileName := filepath.Join(moduleRoot, ".env.testing")
 
-	err := godotenv.Load(filepath.Join(moduleRoot, ".env.testing"))
-	if err != nil {
-		panic(err)
+	if _, err := os.Stat(fileName); err == nil {
+		if err := godotenv.Load(fileName); err != nil {
+			panic(err)
+		}
 	}
 
 	os.Exit(m.Run())
