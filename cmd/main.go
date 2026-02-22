@@ -34,47 +34,46 @@ type Config struct {
 	OutputDir           string `ff:"long=output-dir, usage=Directory to output WireGuard configuration files to" validate:"required"`
 }
 
-func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
-	if err := run(ctx); err != nil {
-		log.Printf("Error: %v", err)
-		os.Exit(1)
-	}
+type App struct {
+	Config          Config
+	Ctx             context.Context
+	Provider        wireguard.Provider
+	ConfigGenerator wireguard.ConfigGenerator
+	HttpClient      *http.Client
+	Validator       *validator.Validate
 }
 
-func run(ctx context.Context) error {
+func newApp(ctx context.Context) (*App, error) {
 	var cfg Config
 	fs := ff.NewFlagSet("wireguard-config-generator")
 	if err := fs.AddStruct(&cfg); err != nil {
-		return fmt.Errorf("add struct flags: %w", err)
+		return nil, fmt.Errorf("add struct flags: %w", err)
 	}
 
 	if err := ff.Parse(fs, os.Args[1:], ff.WithEnvVarPrefix("WIREGUARD_CONFIG_GENERATOR")); err != nil {
 		if errors.Is(err, ff.ErrHelp) {
 			fmt.Fprint(os.Stderr, ffhelp.Flags(fs))
-			return nil
+			return nil, err
 		}
-		return fmt.Errorf("parse flags: %w", err)
+		return nil, fmt.Errorf("parse flags: %w", err)
 	}
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	err := validate.StructCtx(ctx, cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	provider, err := wireguard.NewProvider(cfg.Provider)
 	if err != nil {
-		return fmt.Errorf("create provider: %w", err)
+		return nil, fmt.Errorf("create provider: %w", err)
 	}
 
 	err = ensureConfigValuesForProvider(provider, cfg)
 
 	if err != nil {
-		return fmt.Errorf("ensure config values for provider: %w", err)
+		return nil, fmt.Errorf("ensure config values for provider: %w", err)
 	}
 
 	transport := &http.Transport{
@@ -110,25 +109,52 @@ func run(ctx context.Context) error {
 		)
 	}
 
-	interfaceAddresses, err := cidr.ParseSeparated(cfg.InterfaceAddresses, ",")
+	return &App{
+		Config:          cfg,
+		Ctx:             ctx,
+		Provider:        provider,
+		ConfigGenerator: configGeneratorImpl,
+		HttpClient:      client,
+		Validator:       validate,
+	}, nil
+}
+
+func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	app, err := newApp(ctx)
+	if err != nil {
+		log.Printf("Error creating app: %v", err)
+		os.Exit(1)
+	}
+
+	if err := run(app); err != nil {
+		log.Printf("Error: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run(app *App) error {
+	interfaceAddresses, err := cidr.ParseSeparated(app.Config.InterfaceAddresses, ",")
 	if err != nil {
 		return fmt.Errorf("parse interface addresses: %w", err)
 	}
 
-	allowedIPs, err := cidr.ParseSeparated(cfg.AllowedIPs, ",")
+	allowedIPs, err := cidr.ParseSeparated(app.Config.AllowedIPs, ",")
 	if err != nil {
 		return fmt.Errorf("parse allowed IPs: %w", err)
 	}
 
-	dns, err := ip.ParseSeparated(cfg.DNS, ",")
+	dns, err := ip.ParseSeparated(app.Config.DNS, ",")
 	if err != nil {
 		return fmt.Errorf("parse DNS servers: %w", err)
 	}
 
-	persistentKeepalive, err := strconv.Atoi(cfg.PersistentKeepalive)
+	persistentKeepalive, err := strconv.Atoi(app.Config.PersistentKeepalive)
 
-	configs, err := configGeneratorImpl.List(
-		ctx,
+	configs, err := app.ConfigGenerator.List(
+		app.Ctx,
 		interfaceAddresses,
 		allowedIPs,
 		uint16(persistentKeepalive),
@@ -145,7 +171,7 @@ func run(ctx context.Context) error {
 			return fmt.Errorf("convert config to INI format: %w", err)
 		}
 
-		absolutePath, err := filepath.Abs(cfg.OutputDir)
+		absolutePath, err := filepath.Abs(app.Config.OutputDir)
 
 		if err != nil {
 			return fmt.Errorf("get absolute path of output directory: %w", err)
@@ -155,7 +181,7 @@ func run(ctx context.Context) error {
 			return fmt.Errorf("create output directory: %w", err)
 		}
 
-		fileName := filepath.Join(absolutePath, fmt.Sprintf("%s_%d.conf", cfg.Provider, i))
+		fileName := filepath.Join(absolutePath, fmt.Sprintf("%s_%d.conf", app.Config.Provider, i))
 
 		file, err := os.Create(fileName)
 		if err != nil {

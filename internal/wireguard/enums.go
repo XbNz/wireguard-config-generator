@@ -13,6 +13,8 @@ func NewProvider(slug string) (Provider, error) {
 	switch slug {
 	case "nordvpn":
 		provider = Provider{slug: slug}
+	case "nop":
+		provider = Provider{slug: slug}
 	default:
 		return provider, fmt.Errorf("unknown provider: %s", slug)
 	}
@@ -22,6 +24,14 @@ func NewProvider(slug string) (Provider, error) {
 
 func NordVPNProvider() Provider {
 	provider, err := NewProvider("nordvpn")
+	if err != nil {
+		panic(err)
+	}
+	return provider
+}
+
+func NopProvider() Provider {
+	provider, err := NewProvider("nop")
 	if err != nil {
 		panic(err)
 	}
