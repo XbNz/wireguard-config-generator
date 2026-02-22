@@ -12,7 +12,9 @@ import (
 func ToModuleRoot() (string, error) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", fmt.Errorf("could not determine source file path via runtime.Caller")
+		return "", fmt.Errorf(
+			"could not determine source file path via runtime.Caller",
+		)
 	}
 
 	dir := filepath.Dir(filename)
@@ -22,7 +24,9 @@ func ToModuleRoot() (string, error) {
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", fmt.Errorf("project root not found (no go.mod in any parent directory)")
+			return "", fmt.Errorf(
+				"project root not found (no go.mod in any parent directory)",
+			)
 		}
 		dir = parent
 	}

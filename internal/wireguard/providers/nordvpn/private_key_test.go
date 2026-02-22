@@ -16,18 +16,20 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 
 	t.Run("table tests", func(t *testing.T) {
 		t.Parallel()
-		server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if req.Header.Get(
-				"Authorization",
-			) != "Basic "+base64.StdEncoding.EncodeToString(
-				[]byte("token:"+expectedToken),
-			) {
-				rw.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			rw.WriteHeader(http.StatusOK)
-			rw.Write([]byte(`{"nordlynx_private_key":"test_key"}`))
-		}))
+		server := httptest.NewServer(
+			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if req.Header.Get(
+					"Authorization",
+				) != "Basic "+base64.StdEncoding.EncodeToString(
+					[]byte("token:"+expectedToken),
+				) {
+					rw.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				rw.WriteHeader(http.StatusOK)
+				rw.Write([]byte(`{"nordlynx_private_key":"test_key"}`))
+			}),
+		)
 		defer server.Close()
 
 		tests := []struct {
@@ -76,10 +78,12 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 	t.Run("error is thrown when 200 with invalid json", func(t *testing.T) {
 		t.Parallel()
 
-		badServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			rw.WriteHeader(http.StatusOK)
-			rw.Write([]byte(`{"nordlynx_private_key":""}`))
-		}))
+		badServer := httptest.NewServer(
+			http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+				rw.Write([]byte(`{"nordlynx_private_key":""}`))
+			}),
+		)
 		defer badServer.Close()
 
 		svc := NewPrivateKey(

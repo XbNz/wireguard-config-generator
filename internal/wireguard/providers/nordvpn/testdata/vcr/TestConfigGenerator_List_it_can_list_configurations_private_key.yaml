@@ -1,0 +1,57 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nordvpn.com
+        headers:
+            Content-Type:
+                - application/json
+        url: https://api.nordvpn.com/v1/users/services/credentials
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":373021025,"created_at":"2024-11-29 00:47:38","updated_at":"2024-11-29 00:47:38","username":"sRUU2ng2aNMi2Bx4QT4jUbJh","password":"TvGTwwQnoCJSFiy3jMkssaGJ","nordlynx_private_key":"OEvHuuMpALNf7ZZkzUSGbT8vkj89aHrhLyqZlIn4rPU="}'
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 9d2254fe8d9eac03-YYZ
+            Content-Type:
+                - application/json;charset=utf-8
+            Date:
+                - Sun, 22 Feb 2026 23:41:03 GMT
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - __cf_bm=omKfJKPQhcTOu86Y32w4FPSWF2AZmq55IHdoExrrBts-1771803663-1.0.1.1-Tmrpzk7ISGAnGgkj5Ulkihw7RrdbEEoeopHLmJJflm88PKa.3YHmwXzP9mjUxdBu23XTQeL6FsSHit__6nrokrAI1CTSJF3hMQfPdBB87V8RNFUx9u5UJvQVVXHkWKo4; path=/; expires=Mon, 23-Feb-26 00:11:03 GMT; domain=.nordvpn.com; HttpOnly; Secure; SameSite=None
+                - _cfuvid=LhzOZbQ2IOhi2NSFwba2YB1UmiSXpq4Z1..yXC8lusM-1771803663180-0.0.1.1-604800000; path=/; domain=.nordvpn.com; HttpOnly; Secure; SameSite=None
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Accept-Encoding
+            X-Accept-Before:
+                - "1771846863"
+            X-Authorization:
+                - key-id="rsa-key-1",algorithm="rsa-sha256"
+            X-Content-Security-Policy:
+                - frame-ancestors "none"
+            X-Digest:
+                - 4103c9767ede5be737c98aa60305ee11e08af00e9919f4b2a3c98904b6722b6d
+            X-Frame-Options:
+                - deny
+            X-Signature:
+                - Bj+vRrXxsN07+WlD6qQDJY1xPX++RZ/KhpUrPgOvNKAi6xAtmrLAyEA6OC5Xu0u+5p5B1p6kKM7swL09OFjAcaj6SjUrLXI03RNs8VOsyZQx3l1xNlFxF0jb1qDHfe40GONqurYqT6rCyMjFec2e2frbBDhX+ie6oOHXYp/NrerAHJnh5PmuzbDCTVKWfqwvdmMwsLeYN7ggcstxuRTUzasKCQuxzkHihsEgTVd486+6lwWCIrBalME8w7Gp8+8/0dvHkQPDVjSjZBeyHlyt6dklx4VZQsWznHMI9JY8sOZ+29FL0ReeHIXW818Aa01CMM/kjxVXG5C+1HsC5+flEs3ey9W/8+YAEQrecPZf38+icpf63oCuuda8Mgl6b33Wkox9Eakx1WxjVDGlnhkhbZ528M461meS9uzox3E65Ibi1FLr2EEAy7OulfHF6Y/YHK9et8l3FBMTTUC0gpynAuuCY1WSRJCXUknLuJd/4h2NeCgaBhF4HJyrXbgl1d//6dSpnwOodKitNkUop5kgrydBPYskehBRzIvi9NuX2FTNk0pAwaSPgP7Nx5jmlofF17HwNu+80sdGEa/JB9Ta2PdlVqxzZtqcAB4/DHTG4TCn43n3OzlBBJAksZWlzCkkoRF5AN9Tgcm/MUXkoWrG264qsV7G8+zAwRC4P2ExdsI=
+        status: 200 OK
+        code: 200
+        duration: 100.209625ms

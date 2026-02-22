@@ -21,7 +21,11 @@ type PrivateKeyImpl struct {
 	url    string
 }
 
-func NewPrivateKey(client *http.Client, token string, url string) PrivateKeyImpl {
+func NewPrivateKey(
+	client *http.Client,
+	token string,
+	url string,
+) PrivateKeyImpl {
 	return PrivateKeyImpl{client: client, token: token, url: url}
 }
 
@@ -58,12 +62,18 @@ func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&jsonResponse)
 	if err != nil {
-		return "", fmt.Errorf("decoding nordvpn wireguard private key failed: %w", err)
+		return "", fmt.Errorf(
+			"decoding nordvpn wireguard private key failed: %w",
+			err,
+		)
 	}
 
 	err = validator.New().Struct(jsonResponse)
 	if err != nil {
-		return "", fmt.Errorf("validating nordvpn wireguard private key: %w", err)
+		return "", fmt.Errorf(
+			"validating nordvpn wireguard private key: %w",
+			err,
+		)
 	}
 
 	return key(jsonResponse.WireGuardPrivateKey), nil

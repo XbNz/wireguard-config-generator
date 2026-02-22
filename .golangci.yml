@@ -1,0 +1,256 @@
+version: "2"
+
+run:
+  timeout: 5m
+  skip-dirs:
+    - vendor
+    - build
+    - tmp
+  tests: true
+
+issues:
+  max-same-issues: 50
+  max-issues-per-linter: 0
+
+formatters:
+  enable:
+    - goimports
+    - golines
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/xbnz/wireguard-config-generator
+    golines:
+      max-len: 80
+      tab-len: 4
+      shorten-comments: true
+
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - copyloopvar
+    - cyclop
+    - depguard
+    - dupl
+    - durationcheck
+    - embeddedstructfieldcheck
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - funcorder
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godoclint
+    - godot
+    - goprintffuncname
+    - gosec
+    - govet
+    - iface
+    - ineffassign
+    - intrange
+    - iotamixing
+    - loggercheck
+    - makezero
+    - mirror
+    - mnd
+    - modernize
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - perfsprint
+    - predeclared
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - sloglint
+    - sqlclosecheck
+    - staticcheck
+    - testableexamples
+    - testifylint
+    - testpackage
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - contextcheck
+
+    # Disabled by default - very strict:
+    #- exhaustruct
+    #- varnamelen
+    #- wrapcheck
+    #- interfacebloat
+
+  settings:
+    cyclop:
+      max-complexity: 15
+      package-average: 10.0
+
+    gocognit:
+      min-complexity: 15
+
+    gocyclo:
+      min-complexity: 15
+
+    funlen:
+      lines: 80
+      statements: 50
+
+    nestif:
+      min-complexity: 5
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+    nakedret:
+      max-func-lines: 0
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - whyNoLint # We want nolintlint to handle this
+      settings:
+        captLocal:
+          paramsOnly: false
+        underef:
+          skipRecvDeref: false
+
+    staticcheck:
+      checks:
+        - all
+        - -ST1000 # Skip package comments requirement (optional)
+        - -ST1003 # Skip camelCase naming requirement (optional)
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Too noisy for most cases
+      settings:
+        shadow:
+          strict: true
+
+    gosec:
+      severity: medium
+      confidence: medium
+
+    mnd:
+      ignored-functions:
+        - time.Date
+        - strconv.FormatInt
+        - strconv.FormatUint
+        - strconv.FormatFloat
+        - strconv.ParseInt
+        - strconv.ParseUint
+        - strconv.ParseFloat
+        - os.Chmod
+        - os.Mkdir
+        - os.OpenFile
+        - os.WriteFile
+        - flag.Arg
+        - flag.Duration
+        - flag.Float
+        - flag.Int
+        - flag.Uint
+
+    depguard:
+      rules:
+        "stdlib-preference":
+          files: ["$all"]
+          deny:
+            - pkg: github.com/pkg/errors
+              desc: Use errors package from stdlib instead
+            - pkg: github.com/golang/protobuf
+              desc: Use google.golang.org/protobuf instead
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-no-explanation: [funlen, gocognit, gocyclo]
+
+    unused:
+      field-writes-are-uses: false
+      post-statements-are-reads: false
+      exported-is-used: false
+      parameters-are-used: false
+      local-variables-are-used: false
+
+  exclusions:
+    warn-unused: true
+    presets:
+      - std-error-handling
+      - common-false-positives
+    rules:
+      - source: "TODO|FIXME|XXX|HACK"
+        linters: [godot]
+      - path: '_test\.go'
+        text: "should have a package comment"
+        linters: [revive]
+      - path: '_test\.go'
+        linters:
+          - bodyclose
+          - dupl
+          - goconst
+          - gosec
+          - noctx
+          - gocyclo
+          - gocognit
+          - cyclop
+          - funlen
+          - gochecknoglobals
+          - gochecknoinits
+          - errcheck
+      - path: '_test\.go'
+        text: 'function .* has \d+ lines'
+        linters: [funlen]
+      - path: '.*\.pb\.go'
+        linters:
+          - all
+      - path: '.*_gen\.go'
+        linters:
+          - all
+      - path: 'mock.*\.go'
+        linters:
+          - all
+      - path: '_test\.go'
+        text: "shadow"
+        linters: [govet]
+
+severity:
+  default: error

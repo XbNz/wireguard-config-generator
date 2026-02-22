@@ -16,6 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
+
 	"github.com/xbnz/wireguard-config-generator/internal/cidr"
 	"github.com/xbnz/wireguard-config-generator/internal/ip"
 	"github.com/xbnz/wireguard-config-generator/internal/wireguard"
@@ -23,15 +24,15 @@ import (
 )
 
 type Config struct {
-	Provider            string `ff:"long=provider, default=nordvpn, usage=Provider to use for fetching servers" validate:"required,oneof=nordvpn"`
-	NordServerListUrl   string `ff:"long=nord-server-list-url, default=https://api.nordvpn.com/v1/servers/recommendations, usage=URL to fetch server list from"    validate:"omitempty,url"`
-	NordCredentialsUrl  string `ff:"long=nord-credentials-url, default=https://api.nordvpn.com/v1/users/services/credentials, usage=URL to fetch credentials from" validate:"omitempty,url"`
-	NordToken           string `ff:"long=nord-token, usage=Your NordVPN API token, nodefault"                                                                      validate:"omitempty"`
+	Provider            string `ff:"long=provider, default=nordvpn, usage=Provider to use for fetching servers"                                                                 validate:"required,oneof=nordvpn"`
+	NordServerListUrl   string `ff:"long=nord-server-list-url, default=https://api.nordvpn.com/v1/servers/recommendations, usage=URL to fetch server list from"                 validate:"omitempty,url"`
+	NordCredentialsUrl  string `ff:"long=nord-credentials-url, default=https://api.nordvpn.com/v1/users/services/credentials, usage=URL to fetch credentials from"              validate:"omitempty,url"`
+	NordToken           string `ff:"long=nord-token, usage=Your NordVPN API token, nodefault"                                                                                   validate:"omitempty"`
 	InterfaceAddresses  string `ff:"long=interface-addresses, usage=Comma separated list of interface addresses to use for the WireGuard interface. This is provider-dependant" validate:"required"`
 	DNS                 string `ff:"long=dns, default=1.1.1.1, usage=Comma separated list of DNS servers to use for the WireGuard interface"                                    validate:"required"`
-	AllowedIPs          string `ff:"long=allowed-ips, default=0.0.0.0/0, usage=Comma separated list of allowed IPs for the WireGuard peer"                             validate:"required"`
-	PersistentKeepalive string `ff:"long=persistent-keepalive, default=25, usage=Persistent keepalive interval in seconds"                                           validate:"required,numeric,min=1,max=65535"`
-	OutputDir           string `ff:"long=output-dir, usage=Directory to output WireGuard configuration files to" validate:"required"`
+	AllowedIPs          string `ff:"long=allowed-ips, default=0.0.0.0/0, usage=Comma separated list of allowed IPs for the WireGuard peer"                                      validate:"required"`
+	PersistentKeepalive string `ff:"long=persistent-keepalive, default=25, usage=Persistent keepalive interval in seconds"                                                      validate:"required,numeric,min=1,max=65535"`
+	OutputDir           string `ff:"long=output-dir, usage=Directory to output WireGuard configuration files to"                                                                validate:"required"`
 }
 
 type App struct {
@@ -50,7 +51,11 @@ func newApp(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("add struct flags: %w", err)
 	}
 
-	if err := ff.Parse(fs, os.Args[1:], ff.WithEnvVarPrefix("WIREGUARD_CONFIG_GENERATOR")); err != nil {
+	if err := ff.Parse(
+		fs,
+		os.Args[1:],
+		ff.WithEnvVarPrefix("WIREGUARD_CONFIG_GENERATOR"),
+	); err != nil {
 		if errors.Is(err, ff.ErrHelp) {
 			fmt.Fprint(os.Stderr, ffhelp.Flags(fs))
 			return nil, err
@@ -95,7 +100,6 @@ func newApp(ctx context.Context) (*App, error) {
 	switch provider {
 	case wireguard.NordVPNProvider():
 		configGeneratorImpl = nordvpn.NewConfigGenerator(
-			client,
 			new(nordvpn.NewPrivateKey(
 				client,
 				cfg.NordToken,
@@ -136,7 +140,10 @@ func main() {
 }
 
 func run(app *App) error {
-	interfaceAddresses, err := cidr.ParseSeparated(app.Config.InterfaceAddresses, ",")
+	interfaceAddresses, err := cidr.ParseSeparated(
+		app.Config.InterfaceAddresses,
+		",",
+	)
 	if err != nil {
 		return fmt.Errorf("parse interface addresses: %w", err)
 	}
@@ -181,7 +188,10 @@ func run(app *App) error {
 			return fmt.Errorf("create output directory: %w", err)
 		}
 
-		fileName := filepath.Join(absolutePath, fmt.Sprintf("%s_%d.conf", app.Config.Provider, i))
+		fileName := filepath.Join(
+			absolutePath,
+			fmt.Sprintf("%s_%d.conf", app.Config.Provider, i),
+		)
 
 		file, err := os.Create(fileName)
 		if err != nil {
@@ -196,7 +206,10 @@ func run(app *App) error {
 	return nil
 }
 
-func ensureConfigValuesForProvider(provider wireguard.Provider, cfg Config) error {
+func ensureConfigValuesForProvider(
+	provider wireguard.Provider,
+	cfg Config,
+) error {
 	switch provider {
 	case wireguard.NordVPNProvider():
 		if cfg.NordToken == "" {

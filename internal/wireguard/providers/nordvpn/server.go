@@ -32,7 +32,11 @@ type ServerImpl struct {
 	url       string
 }
 
-func NewServer(client *http.Client, url string, validate *validator.Validate) ServerImpl {
+func NewServer(
+	client *http.Client,
+	url string,
+	validate *validator.Validate,
+) ServerImpl {
 	return ServerImpl{client: client, url: url, validator: validate}
 }
 
@@ -99,52 +103,70 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 
 	if err != nil {
 		if ve, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, fmt.Errorf("invalid structure for nordvpn servers: %w", ve)
+			return nil, fmt.Errorf(
+				"invalid structure for nordvpn servers: %w",
+				ve,
+			)
 		}
 
 		return nil, fmt.Errorf("validating nordvpn servers: %w", err)
 	}
 
-	wireguardCapableServers := lo.Filter(jsonResponse, func(s Server, _ int) bool {
-		wgTechs := lo.Filter(s.Technologies, func(tech Technology, _ int) bool {
-			return tech.Identifier == "wireguard_udp"
-		})
+	wireguardCapableServers := lo.Filter(
+		jsonResponse,
+		func(s Server, _ int) bool {
+			wgTechs := lo.Filter(
+				s.Technologies,
+				func(tech Technology, _ int) bool {
+					return tech.Identifier == "wireguard_udp"
+				},
+			)
 
-		return len(wgTechs) > 0
-	})
+			return len(wgTechs) > 0
+		},
+	)
 
-	wireguardConfigs := lo.Map(wireguardCapableServers, func(s Server, _ int) nordServer {
-		wgTechs := lo.Reject(s.Technologies, func(tech Technology, _ int) bool {
-			return tech.Identifier != "wireguard_udp"
-		})
+	wireguardConfigs := lo.Map(
+		wireguardCapableServers,
+		func(s Server, _ int) nordServer {
+			wgTechs := lo.Reject(
+				s.Technologies,
+				func(tech Technology, _ int) bool {
+					return tech.Identifier != "wireguard_udp"
+				},
+			)
 
-		wgTech, ok := lo.First(wgTechs)
+			wgTech, ok := lo.First(wgTechs)
 
-		if !ok {
-			panic("expected at least one wireguard technology")
-		}
+			if !ok {
+				panic("expected at least one wireguard technology")
+			}
 
-		publicKeyMetas := lo.Reject(wgTech.Metadata, func(meta Metadata, _ int) bool {
-			return meta.Name != "public_key"
-		})
+			publicKeyMetas := lo.Reject(
+				wgTech.Metadata,
+				func(meta Metadata, _ int) bool {
+					return meta.Name != "public_key"
+				},
+			)
 
-		publicKeyMeta, ok := lo.First(publicKeyMetas)
+			publicKeyMeta, ok := lo.First(publicKeyMetas)
 
-		if !ok {
-			panic("expected at least one public key metadata")
-		}
+			if !ok {
+				panic("expected at least one public key metadata")
+			}
 
-		addr, err := netip.ParseAddr(s.IPAddress)
+			addr, err := netip.ParseAddr(s.IPAddress)
 
-		if err != nil {
-			panic("invalid ip address")
-		}
+			if err != nil {
+				panic("invalid ip address")
+			}
 
-		return nordServer{
-			publicKeyMeta.Value,
-			netip.AddrPortFrom(addr, nordVpnDefaultWireguardPort),
-		}
-	})
+			return nordServer{
+				publicKeyMeta.Value,
+				netip.AddrPortFrom(addr, nordVpnDefaultWireguardPort),
+			}
+		},
+	)
 
 	return wireguardConfigs, nil
 }

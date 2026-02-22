@@ -50,7 +50,8 @@ func NewPeerConfig(
 	}
 }
 
-// ToIPCFormat serialises the configuration into the WireGuard UAPI key-value format
+// ToIPCFormat serialises the configuration into the WireGuard UAPI key-value
+// format
 func (c *Configuration) ToIPCFormat() (string, error) {
 	var sb strings.Builder
 
@@ -79,7 +80,11 @@ func (c *Configuration) ToIPCFormat() (string, error) {
 		}
 
 		if peer.PersistentKeepalive > 0 {
-			fmt.Fprintf(&sb, "persistent_keepalive_interval=%d\n\n", peer.PersistentKeepalive)
+			fmt.Fprintf(
+				&sb,
+				"persistent_keepalive_interval=%d\n\n",
+				peer.PersistentKeepalive,
+			)
 		}
 	}
 
@@ -130,7 +135,10 @@ func wgKeyToHex(key string) (string, error) {
 		return "", fmt.Errorf("parse key: %w", err)
 	}
 	if len(decoded) != 32 {
-		return "", fmt.Errorf("parse key: invalid key length %d (expected 32)", len(decoded))
+		return "", fmt.Errorf(
+			"parse key: invalid key length %d (expected 32)",
+			len(decoded),
+		)
 	}
 	return hex.EncodeToString(decoded), nil
 }
