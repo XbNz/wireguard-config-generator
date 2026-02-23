@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 func TestConfigGenerator_List(t *testing.T) {
 	t.Parallel()
 
-	t.Run("it can list configurations", func(t *testing.T) {
+	t.Run("it can List configurations", func(t *testing.T) {
 		redactAuth := func(i *cassette.Interaction) error {
 			delete(i.Request.Headers, "Authorization")
 			return nil
@@ -44,7 +44,9 @@ func TestConfigGenerator_List(t *testing.T) {
 		opts := []recorder.Option{
 			recorder.WithSkipRequestLatency(true),
 			recorder.WithHook(redactAuth, recorder.BeforeSaveHook),
-			recorder.WithMatcher(cassette.NewDefaultMatcher(cassette.WithIgnoreAuthorization())),
+			recorder.WithMatcher(
+				cassette.NewDefaultMatcher(cassette.WithIgnoreAuthorization()),
+			),
 		}
 
 		serverRecorder, err := recorder.New(

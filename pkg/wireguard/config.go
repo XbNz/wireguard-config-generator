@@ -15,6 +15,8 @@ type Configuration struct {
 	Peers              []PeerConfig
 }
 
+// NewConfiguration creates a new Configuration instance with the provided
+// private key, interface addresses, DNS, and peers.
 func NewConfiguration(
 	privateKey string,
 	interfaceAddresses []netip.Prefix,
@@ -36,6 +38,8 @@ type PeerConfig struct {
 	PersistentKeepalive uint16
 }
 
+// NewPeerConfig creates a new PeerConfig with the specified public key,
+// endpoint, allowed IPs, and persistent keepalive.
 func NewPeerConfig(
 	publicKey string,
 	endpoint netip.AddrPort,

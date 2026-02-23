@@ -17,10 +17,12 @@ import (
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
 
+	"github.com/xbnz/wireguard-config-generator/internal/enums"
+	wireguard2 "github.com/xbnz/wireguard-config-generator/pkg/wireguard"
+	nordvpn2 "github.com/xbnz/wireguard-config-generator/pkg/wireguard/providers/nordvpn"
+
 	"github.com/xbnz/wireguard-config-generator/internal/cidr"
 	"github.com/xbnz/wireguard-config-generator/internal/ip"
-	"github.com/xbnz/wireguard-config-generator/internal/wireguard"
-	"github.com/xbnz/wireguard-config-generator/internal/wireguard/providers/nordvpn"
 )
 
 type Config struct {
@@ -38,8 +40,8 @@ type Config struct {
 type App struct {
 	Config          Config
 	Ctx             context.Context
-	Provider        wireguard.Provider
-	ConfigGenerator wireguard.ConfigGenerator
+	Provider        enums.Provider
+	ConfigGenerator wireguard2.ConfigGenerator
 	HttpClient      *http.Client
 	Validator       *validator.Validate
 }
@@ -70,7 +72,7 @@ func newApp(ctx context.Context) (*App, error) {
 		return nil, err
 	}
 
-	provider, err := wireguard.NewProvider(cfg.Provider)
+	provider, err := enums.NewProvider(cfg.Provider)
 	if err != nil {
 		return nil, fmt.Errorf("create provider: %w", err)
 	}
@@ -95,17 +97,17 @@ func newApp(ctx context.Context) (*App, error) {
 		Transport: transport,
 	}
 
-	var configGeneratorImpl wireguard.ConfigGenerator
+	var configGeneratorImpl wireguard2.ConfigGenerator
 
 	switch provider {
-	case wireguard.NordVPNProvider():
-		configGeneratorImpl = nordvpn.NewConfigGenerator(
-			new(nordvpn.NewPrivateKey(
+	case enums.NordVPNProvider():
+		configGeneratorImpl = nordvpn2.NewConfigGenerator(
+			new(nordvpn2.NewPrivateKey(
 				client,
 				cfg.NordToken,
 				cfg.NordCredentialsUrl,
 			)),
-			new(nordvpn.NewServer(
+			new(nordvpn2.NewServer(
 				client,
 				cfg.NordServerListUrl,
 				validate,
@@ -207,11 +209,11 @@ func run(app *App) error {
 }
 
 func ensureConfigValuesForProvider(
-	provider wireguard.Provider,
+	provider enums.Provider,
 	cfg Config,
 ) error {
 	switch provider {
-	case wireguard.NordVPNProvider():
+	case enums.NordVPNProvider():
 		if cfg.NordToken == "" {
 			return errors.New("NordVPN token is required")
 		}

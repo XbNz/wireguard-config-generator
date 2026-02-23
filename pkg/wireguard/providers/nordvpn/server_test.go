@@ -21,8 +21,8 @@ func TestServerImpl_List(t *testing.T) {
 		validator.New(validator.WithRequiredStructEnabled()),
 	)
 
-	t.Run("it can list servers", func(t *testing.T) {
-		configs, err := serverImpl.list(context.Background())
+	t.Run("it can List servers", func(t *testing.T) {
+		configs, err := serverImpl.List(context.Background())
 
 		assert.Nil(t, err)
 		assert.Greater(t, len(configs), 100)

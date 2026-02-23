@@ -18,29 +18,37 @@ const (
 )
 
 type server interface {
-	list(ctx context.Context) ([]nordServer, error)
+	List(ctx context.Context) ([]NordServer, error)
 }
 
-type nordServer struct {
+// NordServer represents a server with a public WireGuard key and an associated
+// network endpoint.
+type NordServer struct {
 	PublicKey string
 	Endpoint  netip.AddrPort
 }
 
-type ServerImpl struct {
+// Server represents a service for interacting with server resources through
+// HTTP requests and validation.
+type Server struct {
 	client    *http.Client
 	validator *validator.Validate
 	url       string
 }
 
+// NewServer initializes and returns a new Server instance with an HTTP client,
+// base URL, and validator configuration.
 func NewServer(
 	client *http.Client,
 	url string,
 	validate *validator.Validate,
-) ServerImpl {
-	return ServerImpl{client: client, url: url, validator: validate}
+) Server {
+	return Server{client: client, url: url, validator: validate}
 }
 
-func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
+// List retrieves a list of NordVPN servers supporting WireGuard UDP and
+// converts them into NordServer instances.
+func (s *Server) List(ctx context.Context) ([]NordServer, error) {
 	filteredUrl, err := url.Parse(s.url)
 
 	type Metadata struct {
@@ -59,7 +67,7 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("parsing nordvpn Server list url: %w", err)
+		return nil, fmt.Errorf("parsing nordvpn Server List url: %w", err)
 	}
 
 	queries := url.Values{
@@ -77,14 +85,14 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("create nordvpn Server list request: %w", err)
+		return nil, fmt.Errorf("create nordvpn Server List request: %w", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 
 	response, err := s.client.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("fetching nordvpn Server list: %w", err)
+		return nil, fmt.Errorf("fetching nordvpn Server List: %w", err)
 	}
 	defer response.Body.Close()
 
@@ -96,7 +104,7 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&jsonResponse)
 	if err != nil {
-		return nil, fmt.Errorf("decoding nordvpn Server list: %w", err)
+		return nil, fmt.Errorf("decoding nordvpn Server List: %w", err)
 	}
 
 	err = s.validator.VarCtx(ctx, jsonResponse, "required,dive")
@@ -128,7 +136,7 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 
 	wireguardConfigs := lo.Map(
 		wireguardCapableServers,
-		func(s Server, _ int) nordServer {
+		func(s Server, _ int) NordServer {
 			wgTechs := lo.Reject(
 				s.Technologies,
 				func(tech Technology, _ int) bool {
@@ -152,7 +160,7 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 			publicKeyMeta, ok := lo.First(publicKeyMetas)
 
 			if !ok {
-				panic("expected at least one public key metadata")
+				panic("expected at least one public Key metadata")
 			}
 
 			addr, err := netip.ParseAddr(s.IPAddress)
@@ -161,7 +169,7 @@ func (s *ServerImpl) list(ctx context.Context) ([]nordServer, error) {
 				panic("invalid ip address")
 			}
 
-			return nordServer{
+			return NordServer{
 				publicKeyMeta.Value,
 				netip.AddrPortFrom(addr, nordVpnDefaultWireguardPort),
 			}

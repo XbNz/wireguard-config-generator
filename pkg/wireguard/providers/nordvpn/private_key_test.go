@@ -35,14 +35,14 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 		tests := []struct {
 			name      string
 			token     string
-			wantKey   key
+			wantKey   Key
 			wantErr   bool
 			errSubstr string
 		}{
 			{
 				name:    "happy path",
 				token:   "test_token",
-				wantKey: key("test_key"),
+				wantKey: Key("test_key"),
 			},
 			{
 				name:      "wrong token",
@@ -60,7 +60,7 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 					server.URL,
 				)
 
-				k, err := svc.fetch(context.Background())
+				k, err := svc.Fetch(context.Background())
 				if tt.wantErr {
 					assert.ErrorContains(t, err, tt.errSubstr)
 					return
@@ -92,7 +92,7 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 			badServer.URL,
 		)
 
-		_, err := svc.fetch(context.Background())
-		assert.ErrorContains(t, err, "validating nordvpn wireguard private key")
+		_, err := svc.Fetch(context.Background())
+		assert.ErrorContains(t, err, "validating nordvpn wireguard private Key")
 	})
 }

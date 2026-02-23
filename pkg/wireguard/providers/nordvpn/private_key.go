@@ -9,27 +9,33 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type key string
+type Key string
 
 type privateKey interface {
-	fetch(ctx context.Context) (key, error)
+	Fetch(ctx context.Context) (Key, error)
 }
 
-type PrivateKeyImpl struct {
+// PrivateKey represents a structure for managing HTTP client, token, and URL
+// for private Key retrieval for NordVPN
+type PrivateKey struct {
 	client *http.Client
 	token  string
 	url    string
 }
 
+// NewPrivateKey initializes and returns a PrivateKey with the provided HTTP
+// client, token, and URL.
 func NewPrivateKey(
 	client *http.Client,
 	token string,
 	url string,
-) PrivateKeyImpl {
-	return PrivateKeyImpl{client: client, token: token, url: url}
+) PrivateKey {
+	return PrivateKey{client: client, token: token, url: url}
 }
 
-func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
+// Fetch retrieves and validates a WireGuard private key from the configured URL
+// using the provided HTTP client and token.
+func (p *PrivateKey) Fetch(ctx context.Context) (Key, error) {
 	type responseShape struct {
 		WireGuardPrivateKey string `json:"nordlynx_private_key" validate:"required,min=1"`
 	}
@@ -42,7 +48,7 @@ func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("creating nordvpn wireguard private key: %w", err)
+		return "", fmt.Errorf("creating nordvpn wireguard private Key: %w", err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
@@ -50,7 +56,7 @@ func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
 
 	response, err := p.client.Do(request)
 	if err != nil {
-		return "", fmt.Errorf("fetching nordvpn wireguard private key: %w", err)
+		return "", fmt.Errorf("fetching nordvpn wireguard private Key: %w", err)
 	}
 	defer response.Body.Close()
 
@@ -63,7 +69,7 @@ func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
 	err = json.NewDecoder(response.Body).Decode(&jsonResponse)
 	if err != nil {
 		return "", fmt.Errorf(
-			"decoding nordvpn wireguard private key failed: %w",
+			"decoding nordvpn wireguard private Key failed: %w",
 			err,
 		)
 	}
@@ -71,10 +77,10 @@ func (p *PrivateKeyImpl) fetch(ctx context.Context) (key, error) {
 	err = validator.New().Struct(jsonResponse)
 	if err != nil {
 		return "", fmt.Errorf(
-			"validating nordvpn wireguard private key: %w",
+			"validating nordvpn wireguard private Key: %w",
 			err,
 		)
 	}
 
-	return key(jsonResponse.WireGuardPrivateKey), nil
+	return Key(jsonResponse.WireGuardPrivateKey), nil
 }
