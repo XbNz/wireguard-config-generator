@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/samber/lo"
+	"github.com/xbnz/wireguard-config-generator/pkg/wireguard"
 )
 
 const (
@@ -18,14 +19,7 @@ const (
 )
 
 type server interface {
-	List(ctx context.Context) ([]NordServer, error)
-}
-
-// NordServer represents a server with a public WireGuard key and an associated
-// network endpoint.
-type NordServer struct {
-	PublicKey string
-	Endpoint  netip.AddrPort
+	List(ctx context.Context) ([]wireguard.Server, error)
 }
 
 // Server represents a service for interacting with server resources through
@@ -47,8 +41,14 @@ func NewServer(
 }
 
 // List retrieves a list of NordVPN servers supporting WireGuard UDP and
-// converts them into NordServer instances.
-func (s *Server) List(ctx context.Context) ([]NordServer, error) {
+// converts them into wireguard.Server instances.
+func (s *Server) List(ctx context.Context) (servers []wireguard.Server, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+
 	filteredUrl, err := url.Parse(s.url)
 
 	type Metadata struct {
@@ -136,7 +136,7 @@ func (s *Server) List(ctx context.Context) ([]NordServer, error) {
 
 	wireguardConfigs := lo.Map(
 		wireguardCapableServers,
-		func(s Server, _ int) NordServer {
+		func(s Server, _ int) wireguard.Server {
 			wgTechs := lo.Reject(
 				s.Technologies,
 				func(tech Technology, _ int) bool {
@@ -169,10 +169,11 @@ func (s *Server) List(ctx context.Context) ([]NordServer, error) {
 				panic("invalid ip address")
 			}
 
-			return NordServer{
+			return wireguard.NewServer(
 				publicKeyMeta.Value,
 				netip.AddrPortFrom(addr, nordVpnDefaultWireguardPort),
-			}
+				netip.AddrPort{},
+			)
 		},
 	)
 

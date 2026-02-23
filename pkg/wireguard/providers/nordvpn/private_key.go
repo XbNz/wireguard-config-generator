@@ -9,10 +9,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type Key string
-
 type privateKey interface {
-	Fetch(ctx context.Context) (Key, error)
+	Fetch(ctx context.Context) (string, error)
 }
 
 // PrivateKey represents a structure for managing HTTP client, token, and URL
@@ -35,7 +33,7 @@ func NewPrivateKey(
 
 // Fetch retrieves and validates a WireGuard private key from the configured URL
 // using the provided HTTP client and token.
-func (p *PrivateKey) Fetch(ctx context.Context) (Key, error) {
+func (p *PrivateKey) Fetch(ctx context.Context) (string, error) {
 	type responseShape struct {
 		WireGuardPrivateKey string `json:"nordlynx_private_key" validate:"required,min=1"`
 	}
@@ -82,5 +80,5 @@ func (p *PrivateKey) Fetch(ctx context.Context) (Key, error) {
 		)
 	}
 
-	return Key(jsonResponse.WireGuardPrivateKey), nil
+	return jsonResponse.WireGuardPrivateKey, nil
 }

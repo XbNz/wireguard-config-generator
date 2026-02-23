@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestServerImpl_List(t *testing.T) {
+func TestServer_List(t *testing.T) {
 	t.Parallel()
 
 	serverImpl := NewServer(

@@ -35,14 +35,14 @@ func TestPrivateKeyImpl_Fetch(t *testing.T) {
 		tests := []struct {
 			name      string
 			token     string
-			wantKey   Key
+			wantKey   string
 			wantErr   bool
 			errSubstr string
 		}{
 			{
 				name:    "happy path",
 				token:   "test_token",
-				wantKey: Key("test_key"),
+				wantKey: "test_key",
 			},
 			{
 				name:      "wrong token",

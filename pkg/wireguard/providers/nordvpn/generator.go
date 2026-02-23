@@ -54,7 +54,7 @@ func (c *ConfigGenerator) List(
 		)
 	}
 
-	return lo.Map(servers, func(ns NordServer, _ int) wireguard.Configuration {
+	return lo.Map(servers, func(ns wireguard.Server, _ int) wireguard.Configuration {
 		peer := wireguard.NewPeerConfig(
 			ns.PublicKey,
 			ns.Endpoint,
