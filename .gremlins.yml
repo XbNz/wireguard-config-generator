@@ -1,0 +1,33 @@
+silent: false
+unleash:
+  dry-run: false
+  tags: "integration"
+  output: "mutations.json"
+  threshold: #
+    efficacy: 90
+    mutant-coverage: 50
+  timeout-coefficient: 15
+
+mutants:
+  arithmetic-base:
+    enabled: true
+  conditionals-boundary:
+    enabled: true
+  conditionals-negation:
+    enabled: true
+  increment-decrement:
+    enabled: true
+  invert-negatives:
+    enabled: true
+  invert-assignments:
+    enabled: true
+  invert-bitwise:
+    enabled: true
+  invert-bwassign:
+    enabled: true
+  invert-logical:
+    enabled: true
+  invert-loopctrl:
+    enabled: true
+  remove-self-assignments:
+    enabled: true
