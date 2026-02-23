@@ -33,6 +33,12 @@
 
 ## Quickstart
 
+### Install
+
+```bash
+go install github.com/xbnz/wireguard-config-generator/cmd/wireguard-config-generator@latest
+```
+
 ### Required Flags
 
 | Flag | Description | Example |
